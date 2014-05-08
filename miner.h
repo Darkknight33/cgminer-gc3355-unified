@@ -1046,7 +1046,6 @@ extern char *opt_bitburner_fury_options;
 #endif
 #ifdef USE_GRIDSEED
 extern char *opt_gridseed_options;
-extern char *opt_gridseed_freq;
 #endif
 #ifdef USE_KLONDIKE
 extern char *opt_klondike_options;
@@ -1170,6 +1169,7 @@ extern int num_processors;
 extern int hw_errors;
 extern bool use_syslog;
 extern bool opt_quiet;
+extern bool opt_extranonce_subscribe;
 extern struct thr_info *control_thr;
 extern struct thr_info **mining_thr;
 extern struct cgpu_info gpus[MAX_GPUDEVICES];
@@ -1276,6 +1276,7 @@ struct stratum_work {
 struct pool {
 	int pool_no;
 	int prio;
+	bool extranonce_subscribe;
 	int accepted, rejected;
 	int seq_rejects;
 	int seq_getfails;
@@ -1358,7 +1359,7 @@ struct pool {
 	char *nonce1;
 	unsigned char *nonce1bin;
 	size_t n1_len;
-	uint32_t nonce2;
+	uint64_t nonce2;
 	int n2size;
 	char *sessionid;
 	bool has_stratum;
@@ -1437,7 +1438,7 @@ struct work {
 
 	bool		stratum;
 	char 		*job_id;
-	uint32_t	nonce2;
+	uint64_t	nonce2;
 	size_t		nonce2_len;
 	char		*ntime;
 	double		sdiff;
@@ -1574,7 +1575,6 @@ enum api_data_type {
 	API_TIMEVAL,
 	API_TIME,
 	API_MHS,
-        API_KHS,
 	API_MHTOTAL,
 	API_TEMP,
 	API_UTILITY,
