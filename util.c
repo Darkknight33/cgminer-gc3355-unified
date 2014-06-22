@@ -1886,7 +1886,7 @@ bool subscribe_extranonce(struct pool *pool)
 		}
 		else
 			ss = strdup("(unknown reason)");
-		
+
 		applog(LOG_INFO, "Pool %d JSON stratum auth failed: %s", pool->pool_no, ss);
 		free(ss);
 
@@ -1894,6 +1894,7 @@ bool subscribe_extranonce(struct pool *pool)
 	}
 
 	ret = true;
+
 	applog(LOG_INFO, "Stratum extranonce subscribe for pool %d", pool->pool_no);
 
 out:

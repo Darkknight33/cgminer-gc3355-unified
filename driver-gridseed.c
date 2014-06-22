@@ -51,6 +51,7 @@ typedef struct s_gridseed_info {
 	struct timeval	scanhash_time;
 	int		nonce_count[GRIDSEED_MAX_CHIPS];  // per chip
 	int		error_count[GRIDSEED_MAX_CHIPS];  // per chip
+	char		*serial;
 	// options
 	int		baud;
 	int		freq;
@@ -59,6 +60,96 @@ typedef struct s_gridseed_info {
 	int		voltage;
 	int		per_chip_stats;
 } GRIDSEED_INFO;
+
+/* commands to set core frequency */
+static const int opt_frequency[] = {
+        700,  706,  713,  719,  725,  731,  738,  744,
+        750,  756,  763,  769,  775,  781,  788,  794,
+        800,  813,  825,  838,  850,  863,  875,  888,
+        900,  913,  925,  938,  950,  963,  975,  988,
+       1000, 1013, 1025, 1038, 1050, 1063, 1075, 1088,
+       1100, 1113, 1125, 1138, 1150, 1163, 1175, 1188,
+       1200, 1213, 1225, 1238, 1250, 1263, 1275, 1288,
+       1300, 1313, 1325, 1338, 1350, 1363, 1375, 1388,
+       1400,
+         -1
+};
+
+static const char *bin_frequency[] = {
+        "\x55\xaa\xef\x00\x05\x00\x60\x83",
+        "\x55\xaa\xef\x00\x05\x00\x03\x8e",
+        "\x55\xaa\xef\x00\x05\x00\x01\x87",
+        "\x55\xaa\xef\x00\x05\x00\x43\x8e",
+        "\x55\xaa\xef\x00\x05\x00\x80\x83",
+        "\x55\xaa\xef\x00\x05\x00\x83\x8e",
+        "\x55\xaa\xef\x00\x05\x00\x41\x87",
+        "\x55\xaa\xef\x00\x05\x00\xc3\x8e",
+
+        "\x55\xaa\xef\x00\x05\x00\xa0\x83",
+        "\x55\xaa\xef\x00\x05\x00\x03\x8f",
+        "\x55\xaa\xef\x00\x05\x00\x81\x87",
+        "\x55\xaa\xef\x00\x05\x00\x43\x8f",
+        "\x55\xaa\xef\x00\x05\x00\xc0\x83",
+        "\x55\xaa\xef\x00\x05\x00\x83\x8f",
+        "\x55\xaa\xef\x00\x05\x00\xc1\x87",
+        "\x55\xaa\xef\x00\x05\x00\xc3\x8f",
+
+        "\x55\xaa\xef\x00\x05\x00\xe0\x83",
+        "\x55\xaa\xef\x00\x05\x00\x01\x88",
+        "\x55\xaa\xef\x00\x05\x00\x00\x84",
+        "\x55\xaa\xef\x00\x05\x00\x41\x88",
+        "\x55\xaa\xef\x00\x05\x00\x20\x84",
+        "\x55\xaa\xef\x00\x05\x00\x81\x88",
+        "\x55\xaa\xef\x00\x05\x00\x40\x84",
+        "\x55\xaa\xef\x00\x05\x00\xc1\x88",
+
+        "\x55\xaa\xef\x00\x05\x00\x60\x84",
+        "\x55\xaa\xef\x00\x05\x00\x01\x89",
+        "\x55\xaa\xef\x00\x05\x00\x80\x84",
+        "\x55\xaa\xef\x00\x05\x00\x41\x89",
+        "\x55\xaa\xef\x00\x05\x00\xa0\x84",
+        "\x55\xaa\xef\x00\x05\x00\x81\x89",
+        "\x55\xaa\xef\x00\x05\x00\xc0\x84",
+        "\x55\xaa\xef\x00\x05\x00\xc1\x89",
+
+        "\x55\xaa\xef\x00\x05\x00\xe0\x84",
+        "\x55\xaa\xef\x00\x05\x00\x01\x8a",
+        "\x55\xaa\xef\x00\x05\x00\x00\x85",
+        "\x55\xaa\xef\x00\x05\x00\x41\x8a",
+        "\x55\xaa\xef\x00\x05\x00\x20\x85",
+        "\x55\xaa\xef\x00\x05\x00\x81\x8a",
+        "\x55\xaa\xef\x00\x05\x00\x40\x85",
+        "\x55\xaa\xef\x00\x05\x00\xc1\x8a",
+
+        "\x55\xaa\xef\x00\x05\x00\x60\x85",
+        "\x55\xaa\xef\x00\x05\x00\x01\x8b",
+        "\x55\xaa\xef\x00\x05\x00\x80\x85",
+        "\x55\xaa\xef\x00\x05\x00\x41\x8b",
+        "\x55\xaa\xef\x00\x05\x00\xa0\x85",
+        "\x55\xaa\xef\x00\x05\x00\x81\x8b",
+        "\x55\xaa\xef\x00\x05\x00\xc0\x85",
+        "\x55\xaa\xef\x00\x05\x00\xc1\x8b",
+
+        "\x55\xaa\xef\x00\x05\x00\xe0\x85"
+        "\x55\xaa\xef\x00\x05\x00\x01\x8c"
+        "\x55\xaa\xef\x00\x05\x00\x00\x86"
+        "\x55\xaa\xef\x00\x05\x00\x41\x8c"
+        "\x55\xaa\xef\x00\x05\x00\x20\x86"
+        "\x55\xaa\xef\x00\x05\x00\x81\x8c"
+        "\x55\xaa\xef\x00\x05\x00\x40\x86"
+        "\x55\xaa\xef\x00\x05\x00\xc1\x8c"
+
+        "\x55\xaa\xef\x00\x05\x00\x60\x86"
+        "\x55\xaa\xef\x00\x05\x00\x01\x8d"
+        "\x55\xaa\xef\x00\x05\x00\x80\x86"
+        "\x55\xaa\xef\x00\x05\x00\x41\x8d"
+        "\x55\xaa\xef\x00\x05\x00\xa0\x86"
+        "\x55\xaa\xef\x00\x05\x00\x81\x8d"
+        "\x55\xaa\xef\x00\x05\x00\xc0\x86"
+        "\x55\xaa\xef\x00\x05\x00\xc1\x8d"
+
+        "\x55\xaa\xef\x00\x05\x00\xe0\x86"
+};
 
 static const char *str_reset[] = {
 	"55AAC000808080800000000001000000", // Chip reset
@@ -241,6 +332,16 @@ static bool gc3355_write_register(struct cgpu_info *gridseed, uint32_t reg_addr,
 	return true;
 }
 
+static int gc3355_find_freq_index(int freq)
+{
+	int	i;
+	for(i=0; opt_frequency[i] != -1; i++) {
+		if (freq == opt_frequency[i])
+			return i;
+	}
+	return 5;
+}
+
 static void gc3355_set_core_freq(struct cgpu_info *gridseed)
 {
 	GRIDSEED_INFO *info = (GRIDSEED_INFO*)(gridseed->device_data);
@@ -269,6 +370,7 @@ static void gc3355_switch_voltage(struct cgpu_info *gridseed) {
 		return;
 	}
 	reg_value |= 0x00000020;
+	//reg_value &= 0xFFFFFFDF;
 	if (!gc3355_write_register(gridseed, GRIDSEED_GPIOA_BASE + GRIDSEED_ODR_OFFSET, reg_value)) {
 		applog(LOG_DEBUG, "Failed to write GPIOA ODR register from %i", gridseed->device_id);
 		return;
@@ -320,7 +422,11 @@ another:
 		info->baud = (tmp != 0) ? tmp : info->baud;
 	}
 	else if (strcasecmp(p, "freq")==0) {
-		info->freq = tmp;
+		int i;
+		for(i=0; opt_frequency[i] != -1; i++) {
+			if (tmp == opt_frequency[i])
+				info->freq = tmp;
+		}
 	}
 	else if (strcasecmp(p, "pll_r")==0) {
 		pll_r = (tmp != 0) ? tmp : pll_r;
@@ -353,24 +459,71 @@ next:
 	}
 	free(ss);
 
-	if (pll_r == 0 && pll_f == 0 && pll_od == 0) {
-		// Support frequency increments of 25.
-		pll_f = info->freq / GRIDSEED_F_IN - 1;
-		pll_f = MAX(0, MIN(127, pll_f));
+	if (pll_r != 0 || pll_f != 0 || pll_od != 0) {
+		int f_ref = GRIDSEED_F_IN / (pll_r + 1);
+		int f_vco = f_ref * (pll_f + 1);
+		int f_out = f_vco / (1 << pll_od);
+		int pll_bs = (f_out >= 500) ? 1 : 0;
+		int cfg_pm = 1, pll_clk_gate = 1;
+		uint32_t cmd = (cfg_pm << 0) | (pll_clk_gate << 2) | (pll_r << 16) |
+			(pll_f << 21) | (pll_od << 28) | (pll_bs << 31);
+		info->freq = f_out;
+		memcpy(info->freq_cmd, "\x55\xaa\xef\x00", 4);
+		*(uint32_t *)(info->freq_cmd + 4) = htole32(cmd);
+	} else {
+		int freq_idx = gc3355_find_freq_index(info->freq);
+		info->freq = opt_frequency[freq_idx];
+		memcpy(info->freq_cmd, bin_frequency[freq_idx], 8);
 	}
 
-	int f_ref = GRIDSEED_F_IN / (pll_r + 1);
-	int f_vco = f_ref * (pll_f + 1);
-	int f_out = f_vco / (1 << pll_od);
-	int pll_bs = (f_out >= 500) ? 1 : 0;
-	int cfg_pm = 1, pll_clk_gate = 1;
-	uint32_t cmd = (cfg_pm << 0) | (pll_clk_gate << 2) | (pll_r << 16) |
-		(pll_f << 21) | (pll_od << 28) | (pll_bs << 31);
-	info->freq = f_out;
-	memcpy(info->freq_cmd, "\x55\xaa\xef\x00", 4);
-	*(uint32_t *)(info->freq_cmd + 4) = htole32(cmd);
-
 	return true;
+}
+
+static bool get_freq(GRIDSEED_INFO *info, char *options)
+{
+	char *ss, *p, *end, *comma, *colon;
+        int tmp;
+
+        if (options == NULL)
+                return false;
+
+        applog(LOG_NOTICE, "GridSeed freq options: '%s'", options);
+        ss = strdup(options);
+        p  = ss;
+        end = p + strlen(p);
+
+another:
+        comma = strchr(p, ',');
+        if (comma != NULL)
+                *comma = '\0';
+        colon = strchr(p, '=');
+        if (colon == NULL)
+                goto next;
+        *colon = '\0';
+
+        tmp = atoi(colon+1);
+        if (strcasecmp(p, info->serial)==0) {
+                applog(LOG_NOTICE, "%s unique frequency: %i", p, tmp);
+                int i;
+                for(i=0; opt_frequency[i] != -1; i++) {
+                        if (tmp == opt_frequency[i])
+                                info->freq = tmp;
+                }
+        }
+
+next:
+        if (comma != NULL) {
+                p = comma + 1;
+                if (p < end)
+                        goto another;
+        }
+        free(ss);
+
+        int freq_idx = gc3355_find_freq_index(info->freq);
+        info->freq = opt_frequency[freq_idx];
+        memcpy(info->freq_cmd, bin_frequency[freq_idx], 8);
+
+        return true;
 }
 
 static int gridseed_cp210x_init(struct cgpu_info *gridseed, int interface)
@@ -546,7 +699,7 @@ static bool gridseed_detect_one(libusb_device *dev, struct usb_find_devices *fou
 {
 	struct cgpu_info *gridseed;
 	GRIDSEED_INFO *info;
-	int err, wrote;
+	int err, wrote, def_freq_inx;
 	unsigned char rbuf[GRIDSEED_READ_SIZE];
 #if 0
 	const char detect_cmd[] =
@@ -573,13 +726,17 @@ static bool gridseed_detect_one(libusb_device *dev, struct usb_find_devices *fou
 
 	info->baud = GRIDSEED_DEFAULT_BAUD;
 	info->freq = GRIDSEED_DEFAULT_FREQUENCY;
+	def_freq_inx = gc3355_find_freq_index(GRIDSEED_DEFAULT_FREQUENCY);
+	memcpy(info->freq_cmd, bin_frequency[def_freq_inx], 8);
 	info->chips = GRIDSEED_DEFAULT_CHIPS;
 	info->voltage = 0;
 	info->per_chip_stats = 0;
+	info->serial = strdup(gridseed->usbdev->serial_string);
 	memset(info->nonce_count, 0, sizeof(info->nonce_count));
 	memset(info->error_count, 0, sizeof(info->error_count));
 
 	get_options(info, opt_gridseed_options);
+	get_freq(info, opt_gridseed_freq);
 
 	update_usb_stats(gridseed);
 
